@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UJI COBA TKA - UPT SD NEGERI CEPOKORJO 2</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* Custom Fonts and Base Styles */
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-arial-cond {
+            /* Fallback for Arial Nova Cond */
+            font-family: "Arial Narrow", Arial, sans-serif;
+            font-stretch: condensed;
+        }
+
+        .font-arial-11 {
+            font-size: 14.6px; /* Approx 11pt */
+            line-height: 1.5;
+        }
+
+        .font-arial-8-italic {
+            font-size: 10.6px; /* Approx 8pt */
+            font-style: italic;
+        }
+
+        /* Custom Checkbox/Radio Styling */
+        .custom-radio input[type="radio"],
+        .custom-checkbox input[type="checkbox"] {
+            display: none;
+        }
+
+        .custom-radio .marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            margin-right: 12px;
+            font-weight: bold;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .custom-radio input[type="radio"]:checked + .marker {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
+        }
+
+        .custom-checkbox .marker {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            margin-right: 12px;
+            transition: all 0.2s;
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked + .marker {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked + .marker::after {
+            content: '✓';
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Category Table Check */
+        .category-check {
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .category-check.checked::after {
+            content: '✓';
+            color: #16a34a;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- DATA SOAL (Diambil keseluruhan 30 soal dari PDF) ---
+        const allQuestions = [
+            {
+                id: 1,
+                type: 'category',
+                stimulus: 'Rio memiliki pizza yang dipotong menjadi 12 bagian sama besar. Dia memakan 3 potong. Kakaknya memakan 2 potong. Ayahnya memakan 4 potong.',
+                text: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut tentang bagian pizza Rio dan kakaknya (Siska).',
+                statements: [
+                    'Pecahan senilai dengan bagian pizza yang dimakan oleh Kakak adalah 1/6',
+                    'Pecahan senilai dengan bagian pizza yang dimakan oleh Rio dan Kakaknya adalah 3/4',
+                    'Sisa pizza yang belum dimakan adalah 1/4'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 2,
+                type: 'pg',
+                stimulus: 'Bu Mira sedang menyiapkan bahan-bahan untuk membuat kue bolu. Dia memiliki 1,5 kg tepung terigu, 4/5 kg gula halus, 0,75 kg mentega, dan 1 1/5 kg telur.',
+                text: 'Urutan persediaan bahan kue Bu Mira dari yang teringan adalah ....',
+                options: [
+                    'gula halus, mentega, telur, tepung terigu',
+                    'mentega, gula halus, telur, tepung terigu',
+                    'gula halus, mentega, tepung terigu, telur',
+                    'mentega, gula halus, tepung terigu, telur'
+                ],
+                answer: 1
+            },
+            {
+                id: 3,
+                type: 'mcma',
+                stimulus: 'Seorang apoteker membuat campuran obat batuk dari tiga jenis cairan: 0,3 liter ekstrak mint, 1/2 liter madu, dan 0,15 liter perasan lemon.',
+                text: 'Berapa volume masing-masing bahan jamu tersebut dalam bentuk pecahan lainnya? Pilihlah jawaban yang benar! Jawaban benar lebih dari satu.',
+                options: [
+                    'Volume ekstrak mint adalah 30/10 liter',
+                    'Bahan paling banyak adalah madu',
+                    'Perasan lemon 0,35 liter lebih sedikit dari madu'
+                ],
+                answers: [1, 2]
+            },
+            {
+                id: 4,
+                type: 'category',
+                stimulus: 'Pak Arjuna membeli sepasang sepatu (Rp 160.000), sebuah tas (Rp 128.000), dan tiga kaos (@ Rp 35.000). Ia membayar dengan empat lembar uang seratus ribuan.',
+                text: 'Pilihlah pernyataan benar dan salah! Pernyataan yang benar lebih dari satu.',
+                statements: [
+                    'Pak Arjuna harus membayar sejumlah Rp323.000,00',
+                    'Total harga kaos adalah Rp 105.000,00',
+                    'Uang kembalian yang diterima adalah Rp 7.000,00'
+                ],
+                answers: ['Salah', 'Benar', 'Benar']
+            },
+            {
+                id: 5,
+                type: 'mcma',
+                stimulus: 'Indah memiliki 75 kg tepung terigu. Sebanyak 2/5 bagian digunakan untuk membuat kue. Sisa tepung dikemas ke dalam kantong-kantong kecil dengan berat 1,5 kg setiap kantong.',
+                text: 'Pilihlah jawaban yang benar! Jawaban lebih dari satu.',
+                options: [
+                    'Tepung terigu yang digunakan untuk membuat kue sebanyak 30 kg.',
+                    'Terdapat 45 kantong tepung terigu yang dibuat.',
+                    'Sisa tepung terigu yang akan dikemas 45 kg.'
+                ],
+                answers: [0, 2]
+            },
+            {
+                id: 6,
+                type: 'pg',
+                stimulus: 'Rina les gitar setiap 10 hari, Susi setiap 15 hari, dan Tika setiap 6 hari. Jika mereka bertiga les gitar bersama-sama pada hari Sabtu, 10 Maret 2024...',
+                text: 'Maka mereka les gitar bersama-sama berikutnya pada...',
+                options: [
+                    'Senin, 8 April 2024',
+                    'Selasa, 9 April 2024',
+                    'Rabu, 10 April 2024',
+                    'Kamis, 11 April 2024'
+                ],
+                answer: 1
+            },
+            {
+                id: 7,
+                type: 'category',
+                stimulus: 'Bu Lastri membagikan paket sembako yang terdiri dari 90 kg beras, 60 bungkus mie instan, dan 45 bungkus gula pasir. Ketiga barang tersebut dikemas sebanyak-banyaknya dengan jumlah dan jenis barang setiap kemasan sama.',
+                text: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+                statements: [
+                    'Banyak paket sembako yang dibuat Bu Lastri ada 15 buah',
+                    'Ada 4 bungkus gula pasir dalam setiap paket',
+                    'Banyak barang dalam setiap paket ada 13 buah'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 8,
+                type: 'pg',
+                stimulus: 'Sebuah bangun datar memiliki sifat-sifat: 1) memiliki empat sisi, 2) sisi yang berhadapan sejajar, 3) kedua diagonalnya saling berpotongan tegak lurus, 4) memiliki dua pasang sudut berhadapan sama besar.',
+                text: 'Bangun datar yang sesuai dengan sifat tersebut adalah ....',
+                options: [
+                    'Persegi',
+                    'Persegi panjang',
+                    'Belah ketupat',
+                    'Trapesium'
+                ],
+                answer: 2
+            },
+            {
+                id: 9,
+                type: 'pg',
+                stimulus: '[Ilustrasi Tumpukan Kardus] Terdapat tumpukan kardus berbentuk kubus. Pada bagian kiri terdapat 1 kubus, di bagian tengah terdapat susunan 2 kubus (atas-bawah), dan di bagian kanan terdapat susunan 2 kubus mendatar dengan tambahan 1 kubus di atas salah satunya, ditambah 1 kubus di bagian belakang susunan.',
+                text: 'Banyak kardus pada tumpukan tersebut ada...',
+                options: [
+                    '7 kardus',
+                    '8 kardus',
+                    '9 kardus',
+                    '10 kardus'
+                ],
+                answer: 0
+            },
+            {
+                id: 10,
+                type: 'mcma',
+                stimulus: 'Pada saat bermain ular tangga Bobi mendapat giliran untuk melempar 2 mata dadu. Diketahui jumlah titik pada setiap sisi dadu yang berlawanan adalah sama (berjumlah 7). Hasil lemparan menunjukkan mata dadu bagian atas adalah 4 dan 5.',
+                text: 'Pilihlah pernyataan hasil lemparan Bobi berikut yang benar! Jawaban lebih dari satu.',
+                options: [
+                    'Banyak titik pada sisi bawah kedua dadu adalah 10 titik.',
+                    'Banyak titik yang berlawanan dengan mata dadu 4 ada 3 titik.',
+                    'Banyak titik yang berlawanan dengan mata dadu 5 ada 1 titik.'
+                ],
+                answers: [1]
+            },
+            {
+                id: 11,
+                type: 'pg',
+                stimulus: 'Budi membuat jembatan miniatur dari 3 buah balok kayu. Setiap balok disambung (dipaku) dengan panjang tumpukan 7 cm. Panjang balok pertama 1,25 meter dan kedua 105 cm. Jika panjang total setelah disambung adalah 35 dm (350 cm).',
+                text: 'Berapakah panjang balok kayu ketiga?',
+                options: [
+                    '230 cm',
+                    '134 cm',
+                    '120 cm',
+                    '110 cm'
+                ],
+                answer: 1
+            },
+            {
+                id: 12,
+                type: 'mcma',
+                stimulus: 'Sebuah drum penampungan air berkapasitas 2.000 liter. Pak Andi menggunakan 750.000 ml air untuk mandi dan 0,8 kl untuk mencuci pakaian.',
+                text: 'Pilihlah jawaban yang benar. Jawaban benar lebih dari satu.',
+                options: [
+                    'Air yang digunakan Pak Andi untuk mandi sebanyak 75 liter',
+                    'Sisa air dalam drum ada 450 liter',
+                    'Air yang digunakan untuk mencuci pakaian adalah 800 liter'
+                ],
+                answers: [1, 2]
+            },
+            {
+                id: 13,
+                type: 'category',
+                stimulus: 'Panitia menyiapkan 4 kotak jus buah (ukuran 2 liter) dan 10 botol jus buah (ukuran 500 ml). Jus dituang ke dispenser dan tersisa 750 ml di dalam kotak dan botol.',
+                text: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+                statements: [
+                    'Banyak jus yang dituang dalam dispenser adalah 12,25 liter',
+                    'Banyak jus yang dituang dalam dispenser adalah 12.000 ml',
+                    'Banyak jus dari botol kecil ada 5 liter'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 14,
+                type: 'pg',
+                stimulus: '[Ilustrasi Timbangan] Sebuah semangka di sisi kiri setimbang dengan 3 anak timbangan di sisi kanan: 2 kg, 1 kg, dan 500 gram.',
+                text: 'Berat buah semangka berdasarkan gambar tersebut adalah....',
+                options: [
+                    '3.750 gram',
+                    '3.500 gram',
+                    '2.750 gram',
+                    '2.500 gram'
+                ],
+                answer: 1
+            },
+            {
+                id: 15,
+                type: 'mcma',
+                stimulus: 'Toko kelontong menerima kiriman 15 kotak teh celup (setiap kotak berisi 24 sachet). Toko menyimpan beberapa kotak dan sisanya 288 sachet dijual kepada pelanggan.',
+                text: 'Pilihlah jawaban yang benar! Jawaban lebih dari satu.',
+                options: [
+                    'Jumlah sachet teh sebelum disimpan adalah 360 sachet',
+                    'Toko tersebut menyimpan 3 kotak teh',
+                    'Jumlah sachet teh yang dijual adalah 12 kotak'
+                ],
+                answers: [0, 1, 2]
+            },
+            {
+                id: 16,
+                type: 'mcma',
+                stimulus: 'Parsel buah berisi 3 kg apel, 2 ikat anggur (@ 600 gram), dan 5 buah jeruk (@ 250 gram).',
+                text: 'Berdasarkan data tersebut, pilihlah jawaban yang benar! Jawaban benar lebih dari satu.',
+                options: [
+                    'Berat total parsel buah tersebut adalah 5.450 gram',
+                    'Selisih berat anggur dan jeruk adalah 150 gram',
+                    'Berat seluruh anggur adalah 1.200 gram'
+                ],
+                answers: [0, 2]
+            },
+            {
+                id: 17,
+                type: 'category',
+                stimulus: 'Data penyelesaian membaca buku: Doni (07.30 - 08.45), Elsa (07.50 - 09.00), Fani (08.10 - 09.15).',
+                text: 'Tentukan Benar atau Salah untuk setiap pernyataan berikut!',
+                statements: [
+                    'Elsa mulai membaca 20 menit setelah Doni.',
+                    'Doni mulai membaca paling awal.',
+                    'Durasi Fani membaca paling lama.'
+                ],
+                answers: ['Benar', 'Benar', 'Salah']
+            },
+            {
+                id: 18,
+                type: 'pg',
+                stimulus: 'Perbandingan banyak apel, mangga, dan durian adalah 5 : 7 : 4. Buah mangga 20 buah lebih banyak dari apel.',
+                text: 'Selisih banyak buah mangga dan durian ada ....',
+                options: [
+                    '10 buah',
+                    '12 buah',
+                    '20 buah',
+                    '30 buah'
+                ],
+                answer: 3
+            },
+            {
+                id: 19,
+                type: 'mcma',
+                stimulus: 'Pak Rudi memperbaiki pagar. Tahap 1 butuh waktu 1 minggu 3 hari, tahap 2 memakan waktu 2 minggu 4 hari.',
+                text: 'Pilihlah jawaban yang benar! Jawaban benar lebih dari satu',
+                options: [
+                    'Perbaikan dilakukan selama 4 minggu.',
+                    'Perbaikan tahap kedua selama 18 hari.',
+                    'Selisih lama perbaikan tiap tahapnya adalah 3 hari.'
+                ],
+                answers: [0, 1]
+            },
+            {
+                id: 20,
+                type: 'category',
+                stimulus: 'Jarak Rumah Andre ke sekolah 2,4 km, sekolah ke Rumah Hendra 3,75 km. Hendra bersepeda (06.30, 15 km/jam), Andre bersepeda (12 km/jam). Mereka tiba bersamaan.',
+                text: 'Tentukan Benar atau Salah untuk setiap pernyataan!',
+                statements: [
+                    'Mereka tiba di sekolah bersama-sama pukul 06.45',
+                    'Andre berangkat pukul 06.30 agar tiba bersamaan dengan Hendra',
+                    'Selisih lama perjalanan yang ditempuh Andre dan Hendra menuju sekolah adalah 3 menit'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 21,
+                type: 'mcma',
+                stimulus: 'Bibi bersepeda ke pasar berjarak 20 km. Ia berangkat 09.00. Ban sepedanya kempes 15 menit. Ia tiba 10.30.',
+                text: 'Pilihlah jawaban yang benar!',
+                options: [
+                    'Jika ban sepeda Bibi tidak kempes, maka waktu tempuh perjalanan Bibi adalah 1 jam 15 menit',
+                    'Rata-rata kecepatan sepeda Bibi adalah 20 km/jam',
+                    'Rata-rata kecepatan sepeda Bibi adalah 16 km/jam untuk waktu tempuh 1 jam 15 menit'
+                ],
+                answers: [0, 2]
+            },
+            {
+                id: 22,
+                type: 'pg',
+                stimulus: 'Kolam ikan persegi panjang ukuran 15 m x 8 m. Dibuat jalan setapak keliling lebar 1 m. Biaya Rp45.000,00 per meter persegi.',
+                text: 'Total biaya minimum pembuatan jalan setapak adalah ....',
+                options: [
+                    'Rp 2.160.000,00',
+                    'Rp 2.250.000,00',
+                    'Rp 2.340.000,00',
+                    'Rp 2.430.000,00'
+                ],
+                answer: 1
+            },
+            {
+                id: 23,
+                type: 'pg',
+                stimulus: 'Jarak Kantor Kapanewon Moyudan dan Godean di peta adalah 5 cm, sedangkan jarak sebenarnya 5,5 km. Indra menyalin peta dengan memperbesar 4 kali dari ukuran semula.',
+                text: 'Skala yang digunakan Indra pada peta baru yang dibuat adalah...',
+                options: [
+                    '1: 25.000',
+                    '1: 27.500',
+                    '1: 137.500',
+                    '1: 440.000'
+                ],
+                answer: 1
+            },
+            {
+                id: 24,
+                type: 'pg',
+                stimulus: 'Wadah air berbentuk kubus terisi setengah (1/2 bagian). Air ditambahkan sebanyak 1.152 dm3 dan tinggi wadah (rusuk) diketahui dari volume total yang diperlukan.',
+                text: 'Air dalam wadah sekarang mempunyai ketinggian ...',
+                options: [
+                    '4,5 dm',
+                    '8 dm',
+                    '12,5 dm',
+                    '13 dm'
+                ],
+                answer: 2
+            },
+            {
+                id: 25,
+                type: 'category',
+                stimulus: '[Ilustrasi Trapesium] Trapesium sama kaki ABCD (alas AB dan atap CD sejajar). Ditarik garis tinggi dari titik D ke bawah, sehingga membentuk sudut 25 derajat antara garis tinggi tersebut dengan sisi miring AD.',
+                text: 'Tentukan Benar atau salah untuk setiap pernyataan tentang besar masing-masing sudut dalam bangun tersebut!',
+                statements: [
+                    'Besar sudut ADC adalah 115 derajat',
+                    'Besar sudut BCD adalah 230 derajat',
+                    'Besar sudut BAD 50 derajat kurang dari sudut BCD'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 26,
+                type: 'pg',
+                stimulus: 'Pak Hendra membeli 3 dus besar minyak goreng, isi 8 liter perdus. Dikemas ulang ke botol 0,75 liter.',
+                text: 'Berapa banyak botol kecil yang harus disiapkan?',
+                options: [
+                    '32 botol',
+                    '32,5 botol',
+                    '33 botol',
+                    '33,3 botol'
+                ],
+                answer: 0
+            },
+            {
+                id: 27,
+                type: 'category',
+                stimulus: 'Taman bunga bentuk persegi panjang dengan ukuran panjang 15,7 meter dan lebar 10,2 meter.',
+                text: 'Taksirlah ukuran ke satuan terdekat. Tentukan Benar atau Salah!',
+                statements: [
+                    'Taksiran terdekat panjang taman adalah 16 meter',
+                    'Taksiran terdekat lebar taman adalah 10 meter',
+                    'Taksiran terdekat keliling taman adalah 42 meter'
+                ],
+                answers: ['Benar', 'Benar', 'Salah']
+            },
+            {
+                id: 28,
+                type: 'category',
+                stimulus: 'Data Piktogram: PNS (3 simbol besar, 1 kecil), Pedagang (2 besar), Karyawan swasta (1 besar, 1 kecil), Wiraswasta (3 besar), Petani (4 besar). Keterangan: 1 simbol besar mewakili 2 orang, 1 kecil mewakili 1 orang.',
+                text: 'Berdasarkan pernyataan tersebut tentukan benar atau salah pernyataan berikut!',
+                statements: [
+                    'Pekerjaan orangtua siswa yang paling banyak adalah PNS',
+                    'Pekerjaan orangtua siswa yang paling sedikit adalah karyawan swasta',
+                    'Selisih pekerjaan orangtua terbanyak dan paling sedikit adalah 5 orang'
+                ],
+                answers: ['Salah', 'Benar', 'Benar']
+            },
+            {
+                id: 29,
+                type: 'category',
+                stimulus: 'Tabel Penjualan: Beras (250 kg), Gula (110 kg), Minyak Goreng (95 kg), Tepung Terigu (120 kg).',
+                text: 'Dari tabel tersebut, tentukan jawaban benar atau salah pernyataan berikut!',
+                statements: [
+                    'Jumlah penjualan barang terbanyak dan paling sedikit adalah 345 kg',
+                    'Barang dagangan yang paling banyak terjual adalah tepung terigu',
+                    'Selisih penjualan gula dan minyak goreng adalah 15 kg'
+                ],
+                answers: ['Benar', 'Salah', 'Benar']
+            },
+            {
+                id: 30,
+                type: 'pg',
+                stimulus: 'Diagram Batang Nilai Ulangan IPA: Nilai 70 (3 siswa), 75 (4 siswa), 80 (5 siswa), 85 (6 siswa), 90 (4 siswa), 95 (2 siswa), 100 (1 siswa). Siswa bernilai < 75 ikut perbaikan.',
+                text: 'Pernyataan yang tepat adalah (I. Jumlah siswa 25 anak, II. Perbaikan 7 anak, III. Pengayaan 22 anak, IV. Rata-rata 88,2)...',
+                options: [
+                    'Hanya I',
+                    'I dan III',
+                    'II dan III',
+                    'II dan IV'
+                ],
+                answer: 0
+            }
+        ];
+
+        // --- COMPONENTS ---
+
+        const App = () => {
+            const [screen, setScreen] = useState('login'); // login, popup, test, result
+            const [userData, setUserData] = useState({ name: '', nisn: '', token: '' });
+            
+            // Test State
+            const [answers, setAnswers] = useState({}); // { qId: answer }
+            const [doubtful, setDoubtful] = useState({}); // { qId: boolean }
+            const [currentIndex, setCurrentIndex] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(75 * 60); // 75 minutes in seconds
+
+            // Format time Helper
+            const formatTime = (seconds) => {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            };
+
+            // Calculate Score
+            const calculateScore = () => {
+                let correctCount = 0;
+                allQuestions.forEach(q => {
+                    const userAns = answers[q.id];
+                    if (userAns === undefined) return;
+
+                    if (q.type === 'pg') {
+                        if (userAns === q.answer) correctCount++;
+                    } else if (q.type === 'mcma') {
+                        // Check if arrays match exactly
+                        if (Array.isArray(userAns) && 
+                            userAns.length === q.answers.length && 
+                            userAns.every(val => q.answers.includes(val))) {
+                            correctCount++;
+                        }
+                    } else if (q.type === 'category') {
+                        // Must be all correct
+                        if (userAns && typeof userAns === 'object') {
+                            let allCorrect = true;
+                            for (let i = 0; i < q.statements.length; i++) {
+                                if (userAns[i] !== q.answers[i]) {
+                                    allCorrect = false;
+                                    break;
+                                }
+                            }
+                            // Also ensure all statements were answered
+                            if (allCorrect && Object.keys(userAns).length === q.statements.length) {
+                                correctCount++;
+                            }
+                        }
+                    }
+                });
+
+                const score = (correctCount * 100) / 30;
+                return score.toFixed(2);
+            };
+
+            const finishTest = () => {
+                setScreen('result');
+            };
+
+            // Timer effect
+            useEffect(() => {
+                let timer;
+                if (screen === 'test' && timeLeft > 0) {
+                    timer = setInterval(() => {
+                        setTimeLeft(prev => {
+                            if (prev <= 1) {
+                                clearInterval(timer);
+                                finishTest();
+                                return 0;
+                            }
+                            return prev - 1;
+                        });
+                    }, 1000);
+                }
+                return () => clearInterval(timer);
+            }, [screen, timeLeft]);
+
+
+            // --- SCREENS ---
+
+            if (screen === 'login') {
+                return <LoginScreen setScreen={setScreen} setUserData={setUserData} userData={userData} />;
+            }
+
+            if (screen === 'popup') {
+                return <PopupScreen setScreen={setScreen} userData={userData} />;
+            }
+
+            if (screen === 'result') {
+                return <ResultScreen score={calculateScore()} />;
+            }
+
+            // --- TEST SCREEN ---
+            const currentQuestion = allQuestions[currentIndex];
+
+            const handleAnswerChange = (val) => {
+                setAnswers(prev => ({ ...prev, [currentQuestion.id]: val }));
+                // If it was doubtful and user answers, maybe clear doubtful? Left as user choice.
+            };
+
+            const toggleDoubtful = () => {
+                setDoubtful(prev => ({ ...prev, [currentQuestion.id]: !prev[currentQuestion.id] }));
+            };
+
+            const handleNext = () => {
+                if (currentIndex < allQuestions.length - 1) setCurrentIndex(currentIndex + 1);
+            };
+
+            const handlePrev = () => {
+                if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+            };
+
+            const handleSkip = () => {
+                handleNext();
+            };
+
+            return (
+                <div className="flex flex-col h-screen bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm border-b px-6 py-3 flex justify-between items-center z-10">
+                        <div className="font-bold text-lg text-gray-800 hidden sm:block">
+                            UJI COBA TKA - SD CEPOKORJO 2
+                        </div>
+                        <div className="flex items-center space-x-4">
+                            <div className="text-sm font-semibold text-gray-600">
+                                {userData.name} ({userData.nisn})
+                            </div>
+                            <div className={`px-4 py-1.5 rounded-full font-bold text-sm flex items-center shadow-inner ${timeLeft < 300 ? 'bg-red-100 text-red-700' : 'bg-blue-50 text-blue-700'}`}>
+                                ⏱️ Sisa Waktu: {formatTime(timeLeft)}
+                            </div>
+                        </div>
+                    </header>
+
+                    <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
+                        {/* Main Content Area */}
+                        <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                            <div className="bg-white rounded-xl shadow-sm border p-6 md:p-8 max-w-4xl mx-auto">
+                                <div className="mb-6 flex justify-between items-center border-b pb-4">
+                                    <h2 className="text-xl font-bold text-gray-800">Soal Nomor {currentIndex + 1}</h2>
+                                    <span className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-500 rounded uppercase tracking-wider">
+                                        {currentQuestion.type === 'pg' ? 'Pilihan Ganda' : currentQuestion.type === 'mcma' ? 'Pilihan Ganda Kompleks' : 'Kategori (Benar/Salah)'}
+                                    </span>
+                                </div>
+
+                                <div className="font-arial-11 text-gray-800 space-y-6">
+                                    {/* Stimulus */}
+                                    {currentQuestion.stimulus && (
+                                        <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                            <p className="leading-relaxed">{currentQuestion.stimulus}</p>
+                                        </div>
+                                    )}
+                                    
+                                    {/* Question Text */}
+                                    <div className="font-semibold text-base">
+                                        <p>{currentQuestion.text}</p>
+                                    </div>
+
+                                    {/* Question Input based on type */}
+                                    <div className="mt-6">
+                                        {currentQuestion.type === 'pg' && (
+                                            <div className="space-y-3">
+                                                {currentQuestion.options.map((opt, idx) => {
+                                                    const letters = ['A', 'B', 'C', 'D'];
+                                                    const isSelected = answers[currentQuestion.id] === idx;
+                                                    return (
+                                                        <label key={idx} className={`custom-radio flex items-center p-3 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${isSelected ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200'}`}>
+                                                            <input 
+                                                                type="radio" 
+                                                                name={`q-${currentQuestion.id}`} 
+                                                                checked={isSelected}
+                                                                onChange={() => handleAnswerChange(idx)}
+                                                            />
+                                                            <span className="marker">{letters[idx]}</span>
+                                                            <span className="flex-1">{opt}</span>
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {currentQuestion.type === 'mcma' && (
+                                            <div className="space-y-3">
+                                                {currentQuestion.options.map((opt, idx) => {
+                                                    const currentAns = answers[currentQuestion.id] || [];
+                                                    const isSelected = currentAns.includes(idx);
+                                                    return (
+                                                        <label key={idx} className={`custom-checkbox flex items-center p-3 border rounded-lg cursor-pointer transition-colors hover:bg-gray-50 ${isSelected ? 'border-blue-500 bg-blue-50/30' : 'border-gray-200'}`}>
+                                                            <input 
+                                                                type="checkbox" 
+                                                                checked={isSelected}
+                                                                onChange={(e) => {
+                                                                    let newAns = [...currentAns];
+                                                                    if (e.target.checked) newAns.push(idx);
+                                                                    else newAns = newAns.filter(val => val !== idx);
+                                                                    handleAnswerChange(newAns);
+                                                                }}
+                                                            />
+                                                            <span className="marker"></span>
+                                                            <span className="flex-1">{opt}</span>
+                                                        </label>
+                                                    )
+                                                })}
+                                            </div>
+                                        )}
+
+                                        {currentQuestion.type === 'category' && (
+                                            <div className="overflow-x-auto border rounded-lg">
+                                                <table className="w-full text-left border-collapse">
+                                                    <thead>
+                                                        <tr className="bg-gray-100 border-b text-center">
+                                                            <th className="p-3 text-left">Pernyataan</th>
+                                                            <th className="p-3 w-24">Benar</th>
+                                                            <th className="p-3 w-24">Salah</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {currentQuestion.statements.map((stmt, idx) => {
+                                                            const currentAns = answers[currentQuestion.id] || {};
+                                                            return (
+                                                                <tr key={idx} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
+                                                                    <td className="p-3">{stmt}</td>
+                                                                    <td className="p-3 text-center border-l bg-white">
+                                                                        <div 
+                                                                            className={`category-check ${currentAns[idx] === 'Benar' ? 'checked' : ''}`}
+                                                                            onClick={() => {
+                                                                                handleAnswerChange({...currentAns, [idx]: 'Benar'})
+                                                                            }}
+                                                                        ></div>
+                                                                    </td>
+                                                                    <td className="p-3 text-center border-l bg-white">
+                                                                        <div 
+                                                                            className={`category-check ${currentAns[idx] === 'Salah' ? 'checked' : ''}`}
+                                                                            onClick={() => {
+                                                                                handleAnswerChange({...currentAns, [idx]: 'Salah'})
+                                                                            }}
+                                                                        ></div>
+                                                                    </td>
+                                                                </tr>
+                                                            )
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Action Buttons Below Question */}
+                            <div className="max-w-4xl mx-auto mt-6 flex justify-between items-center gap-4 flex-wrap">
+                                <div className="flex gap-3 w-full sm:w-auto">
+                                    <button 
+                                        onClick={handlePrev}
+                                        disabled={currentIndex === 0}
+                                        className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm transition-colors flex-1 sm:flex-none"
+                                    >
+                                        &larr; Sebelumnya
+                                    </button>
+                                    <button 
+                                        onClick={handleSkip}
+                                        className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold shadow-sm transition-colors flex-1 sm:flex-none"
+                                    >
+                                        Lewati
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-3 w-full sm:w-auto justify-end">
+                                    <label className="flex items-center gap-2 cursor-pointer bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-lg hover:bg-amber-100 transition-colors flex-1 sm:flex-none justify-center">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 text-amber-500 accent-amber-500"
+                                            checked={!!doubtful[currentQuestion.id]}
+                                            onChange={toggleDoubtful}
+                                        />
+                                        <span className="font-semibold text-amber-700">Ragu-ragu</span>
+                                    </label>
+
+                                    {currentIndex < allQuestions.length - 1 ? (
+                                        <button 
+                                            onClick={handleNext}
+                                            className="px-6 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 font-semibold shadow-sm transition-colors flex-1 sm:flex-none"
+                                        >
+                                            Selanjutnya &rarr;
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => {
+                                                if(confirm('Apakah Anda yakin ingin menyelesaikan ujian?')) finishTest();
+                                            }}
+                                            className="px-8 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 font-bold shadow-md transition-colors flex-1 sm:flex-none"
+                                        >
+                                            Selesai
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </main>
+
+                        {/* Sidebar Navigation */}
+                        <aside className="w-full md:w-80 bg-white border-l shadow-[-4px_0_15px_rgba(0,0,0,0.03)] flex flex-col h-64 md:h-auto">
+                            <div className="p-4 border-b bg-gray-50">
+                                <h3 className="font-bold text-gray-700">Navigasi Soal</h3>
+                                <div className="flex gap-4 mt-2 text-xs font-semibold text-gray-500">
+                                    <div className="flex items-center gap-1"><span className="w-3 h-3 block bg-green-500 rounded-sm"></span> Dijawab</div>
+                                    <div className="flex items-center gap-1"><span className="w-3 h-3 block bg-amber-400 rounded-sm"></span> Ragu</div>
+                                    <div className="flex items-center gap-1"><span className="w-3 h-3 block bg-white border border-gray-300 rounded-sm"></span> Kosong</div>
+                                </div>
+                            </div>
+                            <div className="p-4 overflow-y-auto flex-1">
+                                <div className="grid grid-cols-5 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                                    {allQuestions.map((q, idx) => {
+                                        const isCurrent = idx === currentIndex;
+                                        const isAnswered = q.type === 'category' 
+                                            ? (answers[q.id] && Object.keys(answers[q.id]).length > 0)
+                                            : q.type === 'mcma'
+                                                ? (answers[q.id] && answers[q.id].length > 0)
+                                                : answers[q.id] !== undefined;
+                                        const isDoubtful = doubtful[q.id];
+
+                                        let bgColor = 'bg-white border-gray-300 text-gray-700'; // Default unansered
+                                        if (isDoubtful) bgColor = 'bg-amber-400 border-amber-500 text-amber-900';
+                                        else if (isAnswered) bgColor = 'bg-green-500 border-green-600 text-white';
+
+                                        let ringClass = isCurrent ? 'ring-2 ring-offset-2 ring-blue-500' : '';
+
+                                        return (
+                                            <button 
+                                                key={q.id}
+                                                onClick={() => setCurrentIndex(idx)}
+                                                className={`h-10 rounded font-bold border shadow-sm transition-all hover:opacity-80 flex items-center justify-center ${bgColor} ${ringClass}`}
+                                            >
+                                                {idx + 1}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- LOGIN SCREEN COMPONENT ---
+        const LoginScreen = ({ setScreen, setUserData, userData }) => {
+            const [localData, setLocalData] = useState({ name: '', nisn: '', token: '' });
+            const [error, setError] = useState('');
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (localData.token === '@1K4') {
+                    setUserData(localData);
+                    setScreen('popup');
+                } else {
+                    setError('Maaf, token yang Anda masukkan salah. Silakan ulangi Kembali.');
+                }
+            };
+
+            return (
+                <div className="min-h-screen flex items-center justify-center relative px-4">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 bg-blue-600" style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.1 }}></div>
+                    
+                    <div className="bg-white p-8 md:p-12 rounded-2xl shadow-2xl max-w-md w-full relative z-10 border-t-8 border-blue-600">
+                        
+                        <div className="text-center mb-8">
+                            {/* Placeholder Logo */}
+                            <img 
+                                src="https://placehold.co/100x100/blue/white?text=LOGO+SD" 
+                                alt="Logo Sekolah" 
+                                className="mx-auto mb-4 rounded-full shadow-md border-4 border-white"
+                            />
+                            
+                            <h1 className="font-arial-cond text-2xl font-bold text-gray-800 leading-tight">
+                                UJI COBA TES KEMAMPUAN AKADEMIK (TKA)<br/>
+                                UPT SD NEGERI CEPOKORJO 2<br/>
+                                TAHUN 2027
+                            </h1>
+                            <div className="w-16 h-1 bg-blue-500 mx-auto mt-4 rounded"></div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {error && (
+                                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm font-semibold border border-red-200 text-center">
+                                    {error}
+                                </div>
+                            )}
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Nama Lengkap</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={localData.name}
+                                    onChange={(e) => setLocalData({...localData, name: e.target.value})}
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Masukkan nama Anda"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">NISN</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    value={localData.nisn}
+                                    onChange={(e) => setLocalData({...localData, nisn: e.target.value})}
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                    placeholder="Masukkan NISN"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Token Ujian</label>
+                                <input 
+                                    type="password" 
+                                    required 
+                                    value={localData.token}
+                                    onChange={(e) => {
+                                        setLocalData({...localData, token: e.target.value});
+                                        setError('');
+                                    }}
+                                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono tracking-widest"
+                                    placeholder="••••"
+                                />
+                            </div>
+                            <button 
+                                type="submit" 
+                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all mt-4"
+                            >
+                                Masuk Ujian
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="absolute bottom-4 right-6 text-gray-500 text-sm font-semibold tracking-wide bg-white/80 px-3 py-1 rounded backdrop-blur-sm">
+                        Dibuat oleh: IKA YULLIANA
+                    </div>
+                </div>
+            );
+        };
+
+        // --- POPUP SCREEN COMPONENT ---
+        const PopupScreen = ({ setScreen, userData }) => {
+            return (
+                <div className="min-h-screen bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden transform transition-all">
+                        <div className="bg-blue-600 p-6 text-center text-white">
+                            <h2 className="text-2xl font-bold">Konfirmasi Data</h2>
+                            <p className="opacity-80 text-sm mt-1">Silakan periksa kembali identitas Anda</p>
+                        </div>
+                        
+                        <div className="p-6 md:p-8">
+                            <div className="bg-gray-50 rounded-xl p-4 border mb-6">
+                                <table className="w-full text-left text-gray-700">
+                                    <tbody>
+                                        <tr>
+                                            <th className="py-2 font-semibold w-1/3">Nama</th>
+                                            <td className="py-2 font-bold">: {userData.name}</td>
+                                        </tr>
+                                        <tr>
+                                            <th className="py-2 font-semibold w-1/3">NISN</th>
+                                            <td className="py-2 font-bold">: {userData.nisn}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="mb-8">
+                                <h3 className="font-bold text-gray-800 mb-3 text-lg flex items-center gap-2">
+                                    <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Petunjuk Pengerjaan Soal
+                                </h3>
+                                <ul className="space-y-3 text-gray-700 list-none font-arial-11">
+                                    <li className="flex items-start gap-2">
+                                        <span className="font-bold text-blue-600">a)</span> 
+                                        Soal terdiri dari 30 butir soal dengan waktu mengerjakan maksimal 75 menit.
+                                    </li>
+                                    <li className="flex items-start gap-2">
+                                        <span className="font-bold text-blue-600">b)</span> 
+                                        Periksa Kembali jawaban Anda. Pastikan Anda menjawab dengan benar.
+                                    </li>
+                                </ul>
+                                <p className="mt-4 font-bold text-center text-blue-600 text-lg">Selamat mengerjakan!</p>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button 
+                                    onClick={() => setScreen('test')}
+                                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors w-full sm:w-auto"
+                                >
+                                    Saya Mengerti, Saya Siap Mengerjakan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- RESULT SCREEN COMPONENT ---
+        const ResultScreen = ({ score }) => {
+            return (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                    <div className="bg-white p-8 md:p-12 rounded-3xl shadow-xl max-w-md w-full text-center border-t-8 border-green-500">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        
+                        <h1 className="text-3xl font-bold text-gray-800 mb-2">Selamat!</h1>
+                        <p className="text-gray-600 leading-relaxed mb-8">
+                            Anda telah menyelesaikan Uji Coba Tes Kemampuan Akademik (TKA). Nilai yang anda dapatkan adalah
+                        </p>
+                        
+                        <div className="bg-gradient-to-br from-green-50 to-blue-50 border border-green-100 rounded-2xl p-6 shadow-inner">
+                            <div className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Total Nilai</div>
+                            <div className="text-6xl font-black text-gray-800 tracking-tighter">
+                                {score}
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => window.location.reload()}
+                            className="mt-8 text-blue-600 font-semibold hover:underline"
+                        >
+                            Kembali ke Halaman Awal
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
